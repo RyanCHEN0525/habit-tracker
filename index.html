@@ -188,17 +188,28 @@ render();
 }
 
 /* 減脂進度 */
-function render(){
+// 初始化起始體重
+if(!data.startWeight){
+    data.startWeight = parseFloat(document.getElementById("weightNow")?.value || 83);
+}
 
-let start=83;
-let current=parseFloat(document.getElementById("weightNow").value)||83;
-let goal=parseFloat(document.getElementById("weightGoal").value)||75;
+// 取得數值
+let start = data.startWeight;
+let current = parseFloat(document.getElementById("weightNow").value) || start;
+let goal = parseFloat(document.getElementById("weightGoal").value) || 75;
 
-let p=((start-current)/(start-goal))*100;
-document.getElementById("weightBar").style.width=Math.min(p,100)+"%";
+// 更新 current weight（但不改 start）
+data.currentWeight = current;
 
-document.getElementById("weightInfo").innerText=
-`目前 ${current}kg → 目標 ${goal}kg`;
+// 計算進度
+let progress = (start - current) / (start - goal) * 100;
+progress = Math.min(Math.max(progress, 0), 100);
+
+// 更新 UI
+document.getElementById("weightBar").style.width = progress + "%";
+
+document.getElementById("weightInfo").innerText =
+`起始 ${start}kg → 目前 ${current}kg → 目標 ${goal}kg`;
 
 /* water */
 let w=0;
