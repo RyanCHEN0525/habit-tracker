@@ -3,88 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>減脂 Pro Max</title>
+<title>減脂儀表板 V2</title>
 
 <style>
-:root {
-    --bg: #f4f6f8;
-    --card: #fff;
-    --text: #111;
+body{
+font-family:-apple-system;
+background:#f4f6f8;
+display:flex;
+justify-content:center;
+padding:20px;
 }
 
-.dark {
-    --bg: #0f0f10;
-    --card: #1c1c1e;
-    --text: #fff;
+.container{width:100%;max-width:520px;}
+
+.card{
+background:#fff;
+padding:15px;
+border-radius:14px;
+margin-bottom:12px;
+box-shadow:0 5px 20px rgba(0,0,0,0.08);
 }
 
-body {
-    margin: 0;
-    font-family: -apple-system;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    justify-content: center;
-    padding: 20px;
+input{
+width:100%;
+padding:10px;
+margin:6px 0;
+border-radius:10px;
+border:1px solid #ccc;
 }
 
-.container {
-    width: 100%;
-    max-width: 520px;
+button{
+width:100%;
+padding:10px;
+border:none;
+border-radius:10px;
+background:#333;
+color:white;
+margin-top:6px;
 }
 
-.card {
-    background: var(--card);
-    padding: 15px;
-    border-radius: 14px;
-    margin-bottom: 12px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+.progress{
+height:10px;
+background:#ddd;
+border-radius:20px;
+overflow:hidden;
 }
 
-h2 {
-    margin: 0 0 10px;
+.bar{
+height:100%;
+background:#4caf50;
 }
 
-.row {
-    display: flex;
-    gap: 8px;
+.item{
+display:flex;
+justify-content:space-between;
+padding:6px 0;
+border-bottom:1px solid #eee;
 }
-
-input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-}
-
-button {
-    padding: 10px;
-    border: none;
-    border-radius: 10px;
-    background: #333;
-    color: white;
-}
-
-.progress {
-    height: 10px;
-    background: #ddd;
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-.bar {
-    height: 100%;
-    background: #4caf50;
-}
-
-.item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
-}
-
-small { opacity: 0.7; }
 </style>
 </head>
 
@@ -92,24 +67,22 @@ small { opacity: 0.7; }
 
 <div class="container">
 
-<button onclick="toggleDark()">🌙 深色模式</button>
-
 <!-- 身體資料 -->
 <div class="card">
-<h2>身體數據</h2>
-<div class="row">
+<h3>身體資料</h3>
+
 <input id="age" placeholder="年齡">
 <input id="height" placeholder="身高 cm">
-<input id="weight" placeholder="體重 kg">
-</div>
-<button onclick="calcBMI()">計算 BMI</button>
+<input id="weightNow" placeholder="目前體重 kg">
+<input id="weightGoal" placeholder="目標體重 kg">
 
+<button onclick="calcBMI()">計算 BMI</button>
 <div id="bmiResult"></div>
 </div>
 
-<!-- 減脂目標 -->
+<!-- 減脂進度 -->
 <div class="card">
-<h2>減脂進度 83 → 75kg</h2>
+<h3>減脂進度</h3>
 <div class="progress">
 <div class="bar" id="weightBar"></div>
 </div>
@@ -118,130 +91,146 @@ small { opacity: 0.7; }
 
 <!-- 喝水 -->
 <div class="card">
-<h2>喝水 3500ml</h2>
+<h3>喝水 3500ml</h3>
 <div class="progress">
 <div class="bar" id="waterBar"></div>
 </div>
-<div class="row">
-<input id="waterInput" placeholder="ml">
-<button onclick="addWater()">+水</button>
-</div>
-<div id="waterInfo"></div>
+
+<div id="waterTasks"></div>
 </div>
 
-<!-- 打卡 -->
+<!-- 蛋白質 -->
 <div class="card">
-<h2>每日任務</h2>
-<div id="tasks"></div>
+<h3>蛋白質目標</h3>
+
+<input id="proteinGoal" placeholder="目標蛋白質 g (預設170)">
+<input id="proteinNow" placeholder="已攝取 g">
+
+<button onclick="updateProtein()">更新蛋白質</button>
+
+<div class="progress">
+<div class="bar" id="proteinBar"></div>
 </div>
 
-<!-- 30天紀錄 -->
-<div class="card">
-<h2>最近30天</h2>
-<div id="history"></div>
+<div id="proteinInfo"></div>
 </div>
 
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("proData")) || {};
+let data = JSON.parse(localStorage.getItem("v2")) || {};
+
 let today = new Date().toISOString().split("T")[0];
 
-const tasksList = [
-"蛋白質170g",
-"8000步",
-"健身完成",
-"睡前打卡"
+const waterItems = [
+{name:"起床 500ml", val:500},
+{name:"上午 1000ml", val:1000},
+{name:"下午 1000ml", val:1000},
+{name:"運動 500ml", val:500},
+{name:"睡前 500ml", val:500}
 ];
 
-if (!data[today]) {
-data[today] = {
-water: 0,
-weight: null,
-tasks: {}
+if(!data[today]){
+data[today]={
+water:0,
+waterDone:{},
+proteinNow:0,
+proteinGoal:170
 };
-tasksList.forEach(t => data[today].tasks[t] = false);
+
+waterItems.forEach(i=>data[today].waterDone[i.name]=false);
 }
 
 function save(){
-localStorage.setItem("proData", JSON.stringify(data));
+localStorage.setItem("v2",JSON.stringify(data));
 }
 
-// BMI
+/* BMI */
 function calcBMI(){
-let h = document.getElementById("height").value/100;
-let w = document.getElementById("weight").value;
+let h=document.getElementById("height").value/100;
+let w=document.getElementById("weightNow").value;
 
-let bmi = (w/(h*h)).toFixed(1);
-let status = "";
+let bmi=(w/(h*h)).toFixed(1);
+let status="";
 
-if(bmi < 18.5) status="過瘦";
-else if(bmi < 24) status="正常";
-else if(bmi < 27) status="過重";
+if(bmi<18.5)status="過瘦";
+else if(bmi<24)status="正常";
+else if(bmi<27)status="過重";
 else status="肥胖";
 
-document.getElementById("bmiResult").innerHTML =
-`BMI: ${bmi} (${status})`;
+document.getElementById("bmiResult").innerText=
+`BMI ${bmi} (${status})`;
 }
 
-// 喝水
-function addWater(){
-let v = parseInt(document.getElementById("waterInput").value);
-if(!v) return;
-
-data[today].water += v;
+/* 喝水 */
+function toggleWater(name,val){
+if(!data[today].waterDone[name]){
+data[today].water+=val;
+data[today].waterDone[name]=true;
+}else{
+data[today].water-=val;
+data[today].waterDone[name]=false;
+}
 save();
 render();
 }
 
-// 深色
-function toggleDark(){
-document.body.classList.toggle("dark");
-}
+/* 蛋白質 */
+function updateProtein(){
+let goal=parseInt(document.getElementById("proteinGoal").value)||170;
+let now=parseInt(document.getElementById("proteinNow").value)||0;
 
-// 任務
-function toggleTask(t){
-data[today].tasks[t] = !data[today].tasks[t];
+data[today].proteinGoal=goal;
+data[today].proteinNow=now;
+
 save();
 render();
 }
 
-// 渲染
+/* 減脂進度 */
 function render(){
 
-// water bar
-let w = data[today].water;
-let percent = Math.min(w/3500*100,100);
-document.getElementById("waterBar").style.width = percent+"%";
-document.getElementById("waterInfo").innerText = w+" / 3500ml";
+let start=83;
+let current=parseFloat(document.getElementById("weightNow").value)||83;
+let goal=parseFloat(document.getElementById("weightGoal").value)||75;
 
-// weight goal
-let start=83, goal=75;
-let current = data[today].weight || start;
-let p = ((start-current)/(start-goal))*100;
-document.getElementById("weightBar").style.width = p+"%";
-document.getElementById("weightInfo").innerText = current+"kg";
+let p=((start-current)/(start-goal))*100;
+document.getElementById("weightBar").style.width=Math.min(p,100)+"%";
 
-// tasks
+document.getElementById("weightInfo").innerText=
+`目前 ${current}kg → 目標 ${goal}kg`;
+
+/* water */
+let w=0;
 let html="";
-tasksList.forEach(t=>{
+
+waterItems.forEach(i=>{
+if(data[today].waterDone[i.name])w+=i.val;
+
 html+=`
 <div class="item">
 <label>
-<input type="checkbox" ${data[today].tasks[t]?"checked":""} onchange="toggleTask('${t}')">
-${t}
+<input type="checkbox" ${data[today].waterDone[i.name]?"checked":""}
+onchange="toggleWater('${i.name}',${i.val})">
+${i.name}
 </label>
 </div>`;
 });
-document.getElementById("tasks").innerHTML=html;
 
-// history 30 days
-let keys = Object.keys(data).sort().slice(-30).reverse();
-let h="";
-keys.forEach(k=>{
-h+=`<div>${k} ｜ 💧${data[k].water}ml ｜ ⚖️${data[k].weight||"-"}kg</div>`;
-});
-document.getElementById("history").innerHTML=h;
+document.getElementById("waterTasks").innerHTML=html;
+
+let wp=Math.min(w/3500*100,100);
+document.getElementById("waterBar").style.width=wp+"%";
+
+/* protein */
+let pg=data[today].proteinGoal||170;
+let pn=data[today].proteinNow||0;
+
+let pp=Math.min(pn/pg*100,100);
+
+document.getElementById("proteinBar").style.width=pp+"%";
+document.getElementById("proteinInfo").innerText=
+`${pn} / ${pg} g`;
 }
 
 render();
