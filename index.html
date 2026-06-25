@@ -5,60 +5,36 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="format-detection" content="telephone=no">
 
-<title>Health App Pro Max</title>
+<title>Health App</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 
-/* ========= THEME ========= */
-:root{
-  --bg:#f2f2f7;
-  --card:#fff;
-  --text:#000;
-  --sub:#666;
-  --blue:#007aff;
-}
-
-body.dark{
-  --bg:#000;
-  --card:#1c1c1e;
-  --text:#fff;
-  --sub:#aaa;
-}
-
-/* ========= BASE ========= */
 body{
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont;
-  background:var(--bg);
-  color:var(--text);
+  font-family:-apple-system;
+  background:#f2f2f7;
 }
 
 .container{
   padding:16px;
-  max-width:420px;
-  margin:auto;
   padding-bottom:140px;
 }
 
 .card{
-  background:var(--card);
-  border-radius:18px;
+  background:#fff;
+  border-radius:16px;
   padding:16px;
   margin-bottom:12px;
 }
 
-h2{font-size:18px;}
-
 input{
   width:100%;
   padding:10px;
-  margin:6px 0 10px;
-  border-radius:12px;
+  margin:6px 0;
+  border-radius:10px;
   border:1px solid #ddd;
   font-size:16px;
 }
@@ -67,73 +43,29 @@ button{
   width:100%;
   padding:10px;
   border:none;
-  border-radius:12px;
-  background:var(--blue);
+  border-radius:10px;
+  background:#007aff;
   color:white;
-  font-size:15px;
 }
 
-/* ========= PAGE ========= */
-.page{display:none;}
-.page.active{display:block;}
-
-/* ========= WATER ========= */
-.water-row{
-  margin:8px 0;
-}
-
-/* ========= NAV (APPLE STYLE) ========= */
 .nav{
   position:fixed;
+  bottom:0;
   left:0;
   right:0;
-  bottom:0;
-
   display:flex;
   justify-content:space-around;
-  align-items:center;
-
-  padding:14px 0 calc(18px + env(safe-area-inset-bottom));
-
-  background:rgba(255,255,255,0.85);
-  backdrop-filter: blur(20px);
-
-  border-top:1px solid rgba(0,0,0,0.1);
-
-  z-index:999;
-}
-
-body.dark .nav{
-  background:rgba(28,28,30,0.85);
-  border-top:1px solid rgba(255,255,255,0.1);
+  background:#fff;
+  padding:12px 0;
+  border-top:1px solid #ddd;
 }
 
 .nav div{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-
-  font-size:12px;
-  color:#666;
-
-  padding:12px 14px;
-  border-radius:14px;
-  min-width:70px;
-
-  transition:0.15s;
+  font-size:13px;
 }
 
-/* 點擊效果 */
-.nav div:active{
-  transform:scale(0.9);
-}
-
-/* 選中 */
-.nav div.active{
-  color:var(--blue);
-  font-weight:600;
-}
+.page{display:none;}
+.page.active{display:block;}
 
 </style>
 </head>
@@ -142,72 +74,65 @@ body.dark .nav{
 
 <div class="container">
 
-<!-- ========= 體重 ========= -->
+<!-- 體重 -->
 <div id="page1" class="page active">
 
 <div class="card">
-<h2>體重紀錄</h2>
+<h2>體重</h2>
 
-年齡
-<input id="age" type="number">
+身高
+<input id="height">
 
-身高(cm)
-<input id="height" type="number">
+體重
+<input id="weight">
 
-體重(kg)
-<input id="weight" type="number">
-
-<button onclick="saveWeight()">儲存體重</button>
+<button onclick="saveWeight()">儲存</button>
 
 <div id="bmiInfo"></div>
 </div>
 
 <div class="card">
-<h2>體重趨勢</h2>
 <canvas id="chart"></canvas>
 </div>
 
 </div>
 
-<!-- ========= 喝水 ========= -->
+<!-- 喝水 -->
 <div id="page2" class="page">
 
 <div class="card">
-<h2>喝水紀錄</h2>
+<h2>喝水</h2>
 
-<input id="targetWater" placeholder="每日目標 ml">
-
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 起床 500</label></div>
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 上午 1000</label></div>
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 下午 1000</label></div>
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 運動 500</label></div>
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 睡前 500</label></div>
+<div><input type="checkbox" onchange="calcWater()"> 起床 500</div>
+<div><input type="checkbox" onchange="calcWater()"> 上午 1000</div>
+<div><input type="checkbox" onchange="calcWater()"> 下午 1000</div>
+<div><input type="checkbox" onchange="calcWater()"> 運動 500</div>
+<div><input type="checkbox" onchange="calcWater()"> 睡前 500</div>
 
 <div id="waterInfo">0 ml</div>
 
-<button onclick="resetWater()">重置喝水</button>
+<button onclick="resetWater()">重置</button>
 
 </div>
 
 </div>
 
-<!-- ========= 設定 ========= -->
+<!-- 設定 -->
 <div id="page3" class="page">
 
 <div class="card">
-<h2>設定</h2>
-<button onclick="toggleDark()">🌙 切換深色模式</button>
+<button onclick="toggleDark()">切換深色模式</button>
 </div>
 
 </div>
 
 </div>
 
-<!-- ========= NAV ========= -->
+<!-- NAV -->
 <div class="nav">
-<div onclick="show(1)">📊<br>體重</div>
-<div onclick="show(2)">💧<br>喝水</div>
-<div onclick="show(3)">⚙️<br>設定</div>
+<div onclick="show(1)">體重</div>
+<div onclick="show(2)">喝水</div>
+<div onclick="show(3)">設定</div>
 </div>
 
 <script>
@@ -215,7 +140,7 @@ body.dark .nav{
 let water=[500,1000,1000,500,500];
 let data=JSON.parse(localStorage.getItem("w")||"[]");
 
-/* ========= 體重儲存 ========= */
+/* ========= 體重 ========= */
 function saveWeight(){
 
 let w=+weight.value;
@@ -223,17 +148,13 @@ let h=height.value/100;
 
 let bmi=w/(h*h);
 
-data.push({
-d:new Date().toLocaleDateString(),
-w
-});
+data.push({d:new Date().toLocaleDateString(),w});
 
 localStorage.setItem("w",JSON.stringify(data));
 
-bmiInfo.innerHTML=`BMI:${bmi.toFixed(1)}`;
+bmiInfo.innerHTML="BMI:"+bmi.toFixed(1);
 
 draw();
-analyze();
 }
 
 /* ========= 圖表 ========= */
@@ -247,67 +168,55 @@ window.c=new Chart(ctx,{
 type:"line",
 data:{
 labels:data.map(x=>x.d),
-datasets:[{
-data:data.map(x=>x.w),
-borderColor:"#007aff",
-tension:0.3
-}]
+datasets:[{data:data.map(x=>x.w),borderColor:"#007aff"}]
 },
-options:{
-plugins:{legend:{display:false}}
-}
+options:{plugins:{legend:{display:false}}}
 });
+
 }
 
-/* ========= 分析 ========= */
-function analyze(){
-
-if(data.length===0) return;
-
-let w=data.map(x=>x.w);
-
-let start=w[0];
-let latest=w[w.length-1];
-let diff=latest-start;
-
-let min=Math.min(...w);
-
-let avg7=w.slice(-7).reduce((a,b)=>a+b,0)/Math.min(7,w.length);
-
-let status="";
-
-if(diff<-1) status="🔥 穩定減脂";
-else if(diff<1) status="⚠️ 停滯期";
-else status="📈 回升中";
-
-bmiInfo.innerHTML+=`
-
-<br><br>
-📊 分析<br>
-起始：${start} kg<br>
-目前：${latest} kg<br>
-變化：${diff.toFixed(1)} kg<br>
-平均：${avg7.toFixed(1)} kg<br>
-最低：${min} kg<br>
-狀態：${status}
-`;
-}
-
-/* ========= 喝水 ========= */
+/* ========= 💧 喝水（修好版本） ========= */
 function calcWater(){
 
 let c=document.querySelectorAll("input[type=checkbox]");
-let t=0;
+let total=0;
+let saved=[];
 
 c.forEach((x,i)=>{
-if(x.checked)t+=water[i];
+if(x.checked){
+total+=water[i];
+saved.push(i);
+}
 });
 
-waterInfo.innerText=t+" ml";
+localStorage.setItem("water",JSON.stringify(saved));
+
+waterInfo.innerText=total+" ml";
 }
 
+/* ========= 還原喝水 ========= */
+function restoreWater(){
+
+let saved=JSON.parse(localStorage.getItem("water")||"[]");
+let c=document.querySelectorAll("input[type=checkbox]");
+
+c.forEach(x=>x.checked=false);
+
+saved.forEach(i=>{
+if(c[i]) c[i].checked=true;
+});
+
+calcWater();
+}
+
+/* ========= 重置 ========= */
 function resetWater(){
-document.querySelectorAll("input[type=checkbox]").forEach(x=>x.checked=false);
+
+document.querySelectorAll("input[type=checkbox]")
+.forEach(x=>x.checked=false);
+
+localStorage.removeItem("water");
+
 waterInfo.innerText="0 ml";
 }
 
@@ -317,21 +226,11 @@ function show(n){
 document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
 document.getElementById("page"+n).classList.add("active");
 
-/* active 狀態 */
-document.querySelectorAll(".nav div").forEach(v=>v.classList.remove("active"));
-document.querySelectorAll(".nav div")[n-1].classList.add("active");
-
-}
-
-/* ========= DARK MODE ========= */
-function toggleDark(){
-document.body.classList.toggle("dark");
 }
 
 /* ========= INIT ========= */
 draw();
-analyze();
-show(1);
+restoreWater();
 
 </script>
 
