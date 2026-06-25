@@ -3,63 +3,88 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>減脂儀表板 V2</title>
+<title>減脂 Pro Max</title>
 
 <style>
-body{
-font-family:-apple-system;
-background:#f4f6f8;
-display:flex;
-justify-content:center;
-padding:20px;
+:root {
+    --bg: #f4f6f8;
+    --card: #fff;
+    --text: #111;
 }
 
-.container{width:100%;max-width:520px;}
-
-.card{
-background:#fff;
-padding:15px;
-border-radius:14px;
-margin-bottom:12px;
-box-shadow:0 5px 20px rgba(0,0,0,0.08);
+.dark {
+    --bg: #0f0f10;
+    --card: #1c1c1e;
+    --text: #fff;
 }
 
-input{
-width:100%;
-padding:10px;
-margin:6px 0;
-border-radius:10px;
-border:1px solid #ccc;
+body {
+    margin: 0;
+    font-family: -apple-system;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
 }
 
-button{
-width:100%;
-padding:10px;
-border:none;
-border-radius:10px;
-background:#333;
-color:white;
-margin-top:6px;
+.container {
+    width: 100%;
+    max-width: 520px;
 }
 
-.progress{
-height:10px;
-background:#ddd;
-border-radius:20px;
-overflow:hidden;
+.card {
+    background: var(--card);
+    padding: 15px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
 }
 
-.bar{
-height:100%;
-background:#4caf50;
+h2 {
+    margin: 0 0 10px;
 }
 
-.item{
-display:flex;
-justify-content:space-between;
-padding:6px 0;
-border-bottom:1px solid #eee;
+.row {
+    display: flex;
+    gap: 8px;
 }
+
+input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #333;
+    color: white;
+}
+
+.progress {
+    height: 10px;
+    background: #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.bar {
+    height: 100%;
+    background: #4caf50;
+}
+
+.item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+small { opacity: 0.7; }
 </style>
 </head>
 
@@ -67,22 +92,24 @@ border-bottom:1px solid #eee;
 
 <div class="container">
 
+<button onclick="toggleDark()">🌙 深色模式</button>
+
 <!-- 身體資料 -->
 <div class="card">
-<h3>身體資料</h3>
-
+<h2>身體數據</h2>
+<div class="row">
 <input id="age" placeholder="年齡">
 <input id="height" placeholder="身高 cm">
-<input id="weightNow" placeholder="目前體重 kg">
-<input id="weightGoal" placeholder="目標體重 kg">
-
+<input id="weight" placeholder="體重 kg">
+</div>
 <button onclick="calcBMI()">計算 BMI</button>
+
 <div id="bmiResult"></div>
 </div>
 
-<!-- 減脂進度 -->
+<!-- 減脂目標 -->
 <div class="card">
-<h3>減脂進度</h3>
+<h2>減脂進度 83 → 75kg</h2>
 <div class="progress">
 <div class="bar" id="weightBar"></div>
 </div>
@@ -91,157 +118,130 @@ border-bottom:1px solid #eee;
 
 <!-- 喝水 -->
 <div class="card">
-<h3>喝水 3500ml</h3>
+<h2>喝水 3500ml</h2>
 <div class="progress">
 <div class="bar" id="waterBar"></div>
 </div>
-
-<div id="waterTasks"></div>
+<div class="row">
+<input id="waterInput" placeholder="ml">
+<button onclick="addWater()">+水</button>
+</div>
+<div id="waterInfo"></div>
 </div>
 
-<!-- 蛋白質 -->
+<!-- 打卡 -->
 <div class="card">
-<h3>蛋白質目標</h3>
-
-<input id="proteinGoal" placeholder="目標蛋白質 g (預設170)">
-<input id="proteinNow" placeholder="已攝取 g">
-
-<button onclick="updateProtein()">更新蛋白質</button>
-
-<div class="progress">
-<div class="bar" id="proteinBar"></div>
+<h2>每日任務</h2>
+<div id="tasks"></div>
 </div>
 
-<div id="proteinInfo"></div>
+<!-- 30天紀錄 -->
+<div class="card">
+<h2>最近30天</h2>
+<div id="history"></div>
 </div>
 
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("v2")) || {};
-
+let data = JSON.parse(localStorage.getItem("proData")) || {};
 let today = new Date().toISOString().split("T")[0];
 
-const waterItems = [
-{name:"起床 500ml", val:500},
-{name:"上午 1000ml", val:1000},
-{name:"下午 1000ml", val:1000},
-{name:"運動 500ml", val:500},
-{name:"睡前 500ml", val:500}
+const tasksList = [
+"蛋白質170g",
+"8000步",
+"健身完成",
+"睡前打卡"
 ];
 
-if(!data[today]){
-data[today]={
-water:0,
-waterDone:{},
-proteinNow:0,
-proteinGoal:170
+if (!data[today]) {
+data[today] = {
+water: 0,
+weight: null,
+tasks: {}
 };
-
-waterItems.forEach(i=>data[today].waterDone[i.name]=false);
+tasksList.forEach(t => data[today].tasks[t] = false);
 }
 
 function save(){
-localStorage.setItem("v2",JSON.stringify(data));
+localStorage.setItem("proData", JSON.stringify(data));
 }
 
-/* BMI */
+// BMI
 function calcBMI(){
-let h=document.getElementById("height").value/100;
-let w=document.getElementById("weightNow").value;
+let h = document.getElementById("height").value/100;
+let w = document.getElementById("weight").value;
 
-let bmi=(w/(h*h)).toFixed(1);
-let status="";
+let bmi = (w/(h*h)).toFixed(1);
+let status = "";
 
-if(bmi<18.5)status="過瘦";
-else if(bmi<24)status="正常";
-else if(bmi<27)status="過重";
+if(bmi < 18.5) status="過瘦";
+else if(bmi < 24) status="正常";
+else if(bmi < 27) status="過重";
 else status="肥胖";
 
-document.getElementById("bmiResult").innerText=
-`BMI ${bmi} (${status})`;
+document.getElementById("bmiResult").innerHTML =
+`BMI: ${bmi} (${status})`;
 }
 
-/* 喝水 */
-function toggleWater(name,val){
-if(!data[today].waterDone[name]){
-data[today].water+=val;
-data[today].waterDone[name]=true;
-}else{
-data[today].water-=val;
-data[today].waterDone[name]=false;
-}
+// 喝水
+function addWater(){
+let v = parseInt(document.getElementById("waterInput").value);
+if(!v) return;
+
+data[today].water += v;
 save();
 render();
 }
 
-/* 蛋白質 */
-function updateProtein(){
-let goal=parseInt(document.getElementById("proteinGoal").value)||170;
-let now=parseInt(document.getElementById("proteinNow").value)||0;
+// 深色
+function toggleDark(){
+document.body.classList.toggle("dark");
+}
 
-data[today].proteinGoal=goal;
-data[today].proteinNow=now;
-
+// 任務
+function toggleTask(t){
+data[today].tasks[t] = !data[today].tasks[t];
 save();
 render();
 }
 
-/* 減脂進度 */
-// 初始化起始體重
-if(!data.startWeight){
-    data.startWeight = parseFloat(document.getElementById("weightNow")?.value || 83);
-}
+// 渲染
+function render(){
 
-// 取得數值
-let start = data.startWeight;
-let current = parseFloat(document.getElementById("weightNow").value) || start;
-let goal = parseFloat(document.getElementById("weightGoal").value) || 75;
+// water bar
+let w = data[today].water;
+let percent = Math.min(w/3500*100,100);
+document.getElementById("waterBar").style.width = percent+"%";
+document.getElementById("waterInfo").innerText = w+" / 3500ml";
 
-// 更新 current weight（但不改 start）
-data.currentWeight = current;
+// weight goal
+let start=83, goal=75;
+let current = data[today].weight || start;
+let p = ((start-current)/(start-goal))*100;
+document.getElementById("weightBar").style.width = p+"%";
+document.getElementById("weightInfo").innerText = current+"kg";
 
-// 計算進度
-let progress = (start - current) / (start - goal) * 100;
-progress = Math.min(Math.max(progress, 0), 100);
-
-// 更新 UI
-document.getElementById("weightBar").style.width = progress + "%";
-
-document.getElementById("weightInfo").innerText =
-`起始 ${start}kg → 目前 ${current}kg → 目標 ${goal}kg`;
-
-/* water */
-let w=0;
+// tasks
 let html="";
-
-waterItems.forEach(i=>{
-if(data[today].waterDone[i.name])w+=i.val;
-
+tasksList.forEach(t=>{
 html+=`
 <div class="item">
 <label>
-<input type="checkbox" ${data[today].waterDone[i.name]?"checked":""}
-onchange="toggleWater('${i.name}',${i.val})">
-${i.name}
+<input type="checkbox" ${data[today].tasks[t]?"checked":""} onchange="toggleTask('${t}')">
+${t}
 </label>
 </div>`;
 });
+document.getElementById("tasks").innerHTML=html;
 
-document.getElementById("waterTasks").innerHTML=html;
-
-let wp=Math.min(w/3500*100,100);
-document.getElementById("waterBar").style.width=wp+"%";
-
-/* protein */
-let pg=data[today].proteinGoal||170;
-let pn=data[today].proteinNow||0;
-
-let pp=Math.min(pn/pg*100,100);
-
-document.getElementById("proteinBar").style.width=pp+"%";
-document.getElementById("proteinInfo").innerText=
-`${pn} / ${pg} g`;
+// history 30 days
+let keys = Object.keys(data).sort().slice(-30).reverse();
+let h="";
+keys.forEach(k=>{
+h+=`<div>${k} ｜ 💧${data[k].water}ml ｜ ⚖️${data[k].weight||"-"}kg</div>`;
+});
+document.getElementById("history").innerHTML=h;
 }
 
 render();
