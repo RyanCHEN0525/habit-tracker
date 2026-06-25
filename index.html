@@ -3,14 +3,12 @@
 <head>
 <meta charset="UTF-8">
 
-<!-- iOS 防縮放 -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="format-detection" content="telephone=no">
 
-<title>Health App</title>
+<title>Health App Pro</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -18,13 +16,12 @@
 
 :root{
   --bg:#f2f2f7;
-  --card:#ffffff;
+  --card:#fff;
   --text:#000;
   --sub:#666;
   --blue:#007aff;
 }
 
-/* 🌙 Dark Mode */
 body.dark{
   --bg:#000;
   --card:#1c1c1e;
@@ -43,6 +40,7 @@ body{
   padding:16px;
   max-width:420px;
   margin:auto;
+  padding-bottom:80px;
 }
 
 .card{
@@ -73,9 +71,16 @@ button{
   background:var(--blue);
   color:white;
   font-size:15px;
+  margin-top:6px;
 }
 
-/* 底部導航 */
+.water-row{
+  display:flex;
+  justify-content:space-between;
+  margin:8px 0;
+  font-size:14px;
+}
+
 .nav{
   position:fixed;
   bottom:0;
@@ -90,24 +95,12 @@ button{
 
 .nav div{
   font-size:12px;
-  text-align:center;
   color:var(--sub);
+  text-align:center;
 }
 
-.page{
-  display:none;
-  padding-bottom:70px;
-}
-
-.page.active{
-  display:block;
-}
-
-.water-row{
-  display:flex;
-  justify-content:space-between;
-  margin:8px 0;
-}
+.page{display:none;}
+.page.active{display:block;}
 
 </style>
 </head>
@@ -116,7 +109,7 @@ button{
 
 <div class="container">
 
-<!-- 體重頁 -->
+<!-- 體重 -->
 <div id="page1" class="page active">
 
 <div class="card">
@@ -125,13 +118,13 @@ button{
 年齡
 <input id="age" type="number">
 
-身高
+身高(cm)
 <input id="height" type="number">
 
-體重
+體重(kg)
 <input id="weight" type="number">
 
-<button onclick="saveWeight()">儲存</button>
+<button onclick="saveWeight()">儲存體重</button>
 
 <div id="bmiInfo"></div>
 </div>
@@ -143,13 +136,13 @@ button{
 
 </div>
 
-<!-- 喝水頁 -->
+<!-- 喝水 -->
 <div id="page2" class="page">
 
 <div class="card">
 <h2>喝水紀錄</h2>
 
-<input id="targetWater" placeholder="目標 ml">
+<input id="targetWater" placeholder="每日目標 ml">
 
 <div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 起床 500</label></div>
 <div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 上午 1000</label></div>
@@ -159,12 +152,13 @@ button{
 
 <div id="waterInfo">0 ml</div>
 
-<button onclick="resetWater()">重置</button>
-</div>
+<button onclick="resetWater()">重置喝水</button>
 
 </div>
 
-<!-- 設定頁 -->
+</div>
+
+<!-- 設定 -->
 <div id="page3" class="page">
 
 <div class="card">
@@ -178,7 +172,7 @@ button{
 
 </div>
 
-<!-- 底部 nav -->
+<!-- nav -->
 <div class="nav">
 <div onclick="show(1)">📊 體重</div>
 <div onclick="show(2)">💧 喝水</div>
@@ -188,6 +182,8 @@ button{
 <script>
 
 let water=[500,1000,1000,500,500];
+
+// 📦 載入資料
 let data=JSON.parse(localStorage.getItem("w")||"[]");
 
 function saveWeight(){
@@ -201,24 +197,65 @@ data.push({d:new Date().toLocaleDateString(),w});
 
 localStorage.setItem("w",JSON.stringify(data));
 
-bmiInfo.innerHTML="BMI:"+bmi.toFixed(1);
+bmiInfo.innerHTML=`BMI:${bmi.toFixed(1)}`;
 
 draw();
+analyze();
 }
 
 function draw(){
 
-let ctx=chart.getContext("2d");
-
 if(window.c) window.c.destroy();
+
+let ctx=chart.getContext("2d");
 
 window.c=new Chart(ctx,{
 type:"line",
 data:{
 labels:data.map(x=>x.d),
-datasets:[{data:data.map(x=>x.w),borderColor:"#007aff"}]
+datasets:[{
+data:data.map(x=>x.w),
+borderColor:"#007aff",
+tension:0.3
+}]
+},
+options:{
+plugins:{legend:{display:false}}
 }
 });
+}
+
+function analyze(){
+
+if(data.length===0) return;
+
+let w=data.map(x=>x.w);
+
+let start=w[0];
+let latest=w[w.length-1];
+let diff=latest-start;
+
+let min=Math.min(...w);
+
+let avg7=w.slice(-7).reduce((a,b)=>a+b,0)/Math.min(7,w.length);
+
+let status="";
+
+if(diff<-1) status="🔥 穩定減脂";
+else if(diff<1) status="⚠️ 停滯期";
+else status="📈 回升中";
+
+bmiInfo.innerHTML+=`
+
+<br><br>
+📊 分析<br>
+起始：${start} kg<br>
+目前：${latest} kg<br>
+變化：${diff.toFixed(1)} kg<br>
+平均：${avg7.toFixed(1)} kg<br>
+最低：${min} kg<br>
+狀態：${status}
+`;
 }
 
 function calcWater(){
@@ -226,7 +263,9 @@ function calcWater(){
 let c=document.querySelectorAll("input[type=checkbox]");
 let t=0;
 
-c.forEach((x,i)=>{if(x.checked)t+=water[i]});
+c.forEach((x,i)=>{
+if(x.checked)t+=water[i];
+});
 
 waterInfo.innerText=t+" ml";
 }
@@ -246,6 +285,7 @@ document.body.classList.toggle("dark");
 }
 
 draw();
+analyze();
 
 </script>
 
