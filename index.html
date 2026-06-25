@@ -1,11 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+
+<title>Health App Pro Max</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+/* ========= THEME ========= */
+:root{
+  --bg:#f2f2f7;
+  --card:#fff;
+  --text:#000;
+  --sub:#666;
+  --blue:#007aff;
+}
+
+body.dark{
+  --bg:#000;
+  --card:#1c1c1e;
+  --text:#fff;
+  --sub:#aaa;
+}
+
+/* ========= BASE ========= */
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.container{
+  padding:16px;
+  max-width:420px;
+  margin:auto;
+  padding-bottom:140px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:12px;
+}
+
+h2{font-size:18px;}
+
+input{
+  width:100%;
+  padding:10px;
+  margin:6px 0 10px;
+  border-radius:12px;
+  border:1px solid #ddd;
+  font-size:16px;
+}
+
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:12px;
+  background:var(--blue);
+  color:white;
+  font-size:15px;
+}
+
+/* ========= PAGE ========= */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ========= WATER ========= */
+.water-row{
+  margin:8px 0;
+}
+
+/* ========= NAV (APPLE STYLE) ========= */
+.nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+
+  padding:14px 0 calc(18px + env(safe-area-inset-bottom));
+
+  background:rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+
+  border-top:1px solid rgba(0,0,0,0.1);
+
+  z-index:999;
+}
+
+body.dark .nav{
+  background:rgba(28,28,30,0.85);
+  border-top:1px solid rgba(255,255,255,0.1);
+}
+
+.nav div{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+
+  font-size:12px;
+  color:#666;
+
+  padding:12px 14px;
+  border-radius:14px;
+  min-width:70px;
+
+  transition:0.15s;
+}
+
+/* 點擊效果 */
+.nav div:active{
+  transform:scale(0.9);
+}
+
+/* 選中 */
+.nav div.active{
+  color:var(--blue);
+  font-weight:600;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- ========= 體重 ========= -->
+<div id="page1" class="page active">
+
+<div class="card">
+<h2>體重紀錄</h2>
+
+年齡
+<input id="age" type="number">
+
+身高(cm)
+<input id="height" type="number">
+
+體重(kg)
+<input id="weight" type="number">
+
+<button onclick="saveWeight()">儲存體重</button>
+
+<div id="bmiInfo"></div>
+</div>
+
+<div class="card">
+<h2>體重趨勢</h2>
+<canvas id="chart"></canvas>
+</div>
+
+</div>
+
+<!-- ========= 喝水 ========= -->
+<div id="page2" class="page">
+
+<div class="card">
+<h2>喝水紀錄</h2>
+
+<input id="targetWater" placeholder="每日目標 ml">
+
+<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 起床 500</label></div>
+<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 上午 1000</label></div>
+<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 下午 1000</label></div>
+<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 運動 500</label></div>
+<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 睡前 500</label></div>
+
+<div id="waterInfo">0 ml</div>
+
+<button onclick="resetWater()">重置喝水</button>
+
+</div>
+
+</div>
+
+<!-- ========= 設定 ========= -->
+<div id="page3" class="page">
+
+<div class="card">
+<h2>設定</h2>
+<button onclick="toggleDark()">🌙 切換深色模式</button>
+</div>
+
+</div>
+
+</div>
+
+<!-- ========= NAV ========= -->
+<div class="nav">
+<div onclick="show(1)">📊<br>體重</div>
+<div onclick="show(2)">💧<br>喝水</div>
+<div onclick="show(3)">⚙️<br>設定</div>
+</div>
+
 <script>
 
 let water=[500,1000,1000,500,500];
 let data=JSON.parse(localStorage.getItem("w")||"[]");
 
-/* =========================
-   體重
-========================= */
+/* ========= 體重儲存 ========= */
 function saveWeight(){
 
 let w=+weight.value;
@@ -26,9 +236,7 @@ draw();
 analyze();
 }
 
-/* =========================
-   圖表
-========================= */
+/* ========= 圖表 ========= */
 function draw(){
 
 if(window.c) window.c.destroy();
@@ -51,9 +259,7 @@ plugins:{legend:{display:false}}
 });
 }
 
-/* =========================
-   體重分析
-========================= */
+/* ========= 分析 ========= */
 function analyze(){
 
 if(data.length===0) return;
@@ -87,86 +293,47 @@ bmiInfo.innerHTML+=`
 `;
 }
 
-/* =========================
-   💧 喝水（已修復核心）
-========================= */
+/* ========= 喝水 ========= */
 function calcWater(){
 
 let c=document.querySelectorAll("input[type=checkbox]");
-let total=0;
-let saved=[];
+let t=0;
 
 c.forEach((x,i)=>{
-  if(x.checked){
-    total += water[i];
-    saved.push(i);
-  }
+if(x.checked)t+=water[i];
 });
 
-/* 🔥 存起來 */
-localStorage.setItem("waterState", JSON.stringify(saved));
-
-waterInfo.innerText = total + " ml";
+waterInfo.innerText=t+" ml";
 }
 
-/* =========================
-   💧 還原喝水狀態
-========================= */
-function restoreWater(){
-
-let saved = JSON.parse(localStorage.getItem("waterState") || "[]");
-let c = document.querySelectorAll("input[type=checkbox]");
-
-c.forEach(x=>x.checked=false);
-
-saved.forEach(i=>{
-  if(c[i]) c[i].checked = true;
-});
-
-calcWater();
-}
-
-/* =========================
-   💧 重置喝水
-========================= */
 function resetWater(){
-
-document.querySelectorAll("input[type=checkbox]")
-.forEach(x=>x.checked=false);
-
-localStorage.removeItem("waterState");
-
+document.querySelectorAll("input[type=checkbox]").forEach(x=>x.checked=false);
 waterInfo.innerText="0 ml";
 }
 
-/* =========================
-   NAV
-========================= */
+/* ========= NAV ========= */
 function show(n){
 
 document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
 document.getElementById("page"+n).classList.add("active");
 
+/* active 狀態 */
 document.querySelectorAll(".nav div").forEach(v=>v.classList.remove("active"));
 document.querySelectorAll(".nav div")[n-1].classList.add("active");
 
 }
 
-/* =========================
-   DARK MODE
-========================= */
+/* ========= DARK MODE ========= */
 function toggleDark(){
 document.body.classList.toggle("dark");
 }
 
-/* =========================
-   INIT
-========================= */
+/* ========= INIT ========= */
 draw();
 analyze();
 show(1);
 
-/* 🔥 重點：自動還原喝水 */
-restoreWater();
-
 </script>
+
+</body>
+</html>
