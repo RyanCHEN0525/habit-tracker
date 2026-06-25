@@ -1,50 +1,55 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>待辦清單</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日減脂檢查表</title>
 
 <style>
 body {
-    font-family: Arial, sans-serif;
-    background: #f5f5f5;
+    font-family: Arial;
+    background: #f4f6f8;
     display: flex;
     justify-content: center;
-    padding-top: 50px;
+    padding: 20px;
 }
 
 .container {
     width: 100%;
-    max-width: 500px;
+    max-width: 520px;
     background: white;
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.1);
 }
 
-h1 {
+h2 {
     text-align: center;
 }
 
-.input-area {
+.item {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 15px;
+}
+
+.left {
+    display: flex;
+    align-items: center;
     gap: 10px;
 }
 
-input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-}
-
 button {
-    padding: 10px 15px;
+    margin-top: 15px;
+    width: 100%;
+    padding: 10px;
     border: none;
+    border-radius: 8px;
     background: #333;
     color: white;
-    border-radius: 8px;
     cursor: pointer;
 }
 
@@ -52,32 +57,10 @@ button:hover {
     background: #555;
 }
 
-ul {
-    list-style: none;
-    padding: 0;
-    margin-top: 20px;
-}
-
-li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
-
-.done {
-    text-decoration: line-through;
+.small {
+    font-size: 12px;
     color: gray;
-}
-
-.actions button {
-    margin-left: 5px;
-    background: #999;
-}
-
-.actions button.delete {
-    background: #e74c3c;
+    text-align: center;
 }
 </style>
 </head>
@@ -85,65 +68,78 @@ li {
 <body>
 
 <div class="container">
-    <h1>待辦清單</h1>
+    <h2>每日檢查</h2>
+    <div class="small" id="today"></div>
 
-    <div class="input-area">
-        <input id="todoInput" placeholder="輸入待辦事項...">
-        <button onclick="addTodo()">新增</button>
-    </div>
+    <div id="list"></div>
 
-    <ul id="todoList"></ul>
+    <button onclick="resetToday()">重置今天</button>
 </div>
 
 <script>
-let todos = JSON.parse(localStorage.getItem("todos")) || [];
+const today = new Date().toISOString().split("T")[0];
+
+const items = [
+    "體重紀錄",
+    "喝水3500ml以上",
+    "起床 500ml",
+    "上午 1000ml",
+    "下午 1000ml",
+    "運動時 500ml",
+    "睡前 500ml",
+    "蛋白質170g以上",
+    "步數8000步以上",
+    "完成訓練",
+    "00:30前睡覺"
+];
+
+let data = JSON.parse(localStorage.getItem("dailyCheck")) || {};
+
+if (!data[today]) {
+    data[today] = {};
+    items.forEach(i => data[today][i] = false);
+}
 
 function save() {
-    localStorage.setItem("todos", JSON.stringify(todos));
+    localStorage.setItem("dailyCheck", JSON.stringify(data));
+}
+
+function toggle(item) {
+    data[today][item] = !data[today][item];
+    save();
+    render();
 }
 
 function render() {
-    const list = document.getElementById("todoList");
+    document.getElementById("today").innerText = "今天：" + today;
+
+    const list = document.getElementById("list");
     list.innerHTML = "";
 
-    todos.forEach((todo, index) => {
-        const li = document.createElement("li");
+    items.forEach(item => {
+        const checked = data[today][item];
 
-        li.innerHTML = `
-            <span class="${todo.done ? 'done' : ''}" onclick="toggle(${index})">
-                ${todo.text}
-            </span>
-            <div class="actions">
-                <button onclick="toggle(${index})">✔</button>
-                <button class="delete" onclick="removeTodo(${index})">刪除</button>
+        const div = document.createElement("div");
+        div.className = "item";
+
+        div.innerHTML = `
+            <div class="left">
+                <input type="checkbox" ${checked ? "checked" : ""} onchange="toggle('${item}')">
+                <span>${item}</span>
             </div>
+            <span>${checked ? "✔" : ""}</span>
         `;
 
-        list.appendChild(li);
+        list.appendChild(div);
     });
 }
 
-function addTodo() {
-    const input = document.getElementById("todoInput");
-    const text = input.value.trim();
+function resetToday() {
+    if (!confirm("確定要重置今天嗎？")) return;
 
-    if (!text) return;
+    data[today] = {};
+    items.forEach(i => data[today][i] = false);
 
-    todos.push({ text, done: false });
-    input.value = "";
-
-    save();
-    render();
-}
-
-function toggle(index) {
-    todos[index].done = !todos[index].done;
-    save();
-    render();
-}
-
-function removeTodo(index) {
-    todos.splice(index, 1);
     save();
     render();
 }
