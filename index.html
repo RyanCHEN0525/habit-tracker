@@ -36,11 +36,12 @@ body{
   color:var(--text);
 }
 
+/* 🔥 重要：避免被底部 Home bar 擋住 */
 .container{
   padding:16px;
   max-width:420px;
   margin:auto;
-  padding-bottom:80px;
+  padding-bottom:140px;
 }
 
 .card{
@@ -74,31 +75,39 @@ button{
   margin-top:6px;
 }
 
-.water-row{
-  display:flex;
-  justify-content:space-between;
-  margin:8px 0;
-  font-size:14px;
-}
-
+/* =========================
+   🔥 底部導航（已修正）
+========================= */
 .nav{
   position:fixed;
-  bottom:0;
   left:0;
   right:0;
-  background:var(--card);
+  bottom:0;
+
   display:flex;
   justify-content:space-around;
-  padding:10px 0;
+
+  padding:14px 0 calc(14px + env(safe-area-inset-bottom));
+
+  background:var(--card);
   border-top:1px solid #ddd;
+
+  z-index:999;
 }
 
+/* 🔥 按鈕變好按 */
 .nav div{
-  font-size:12px;
-  color:var(--sub);
+  font-size:13px;
   text-align:center;
+  color:var(--sub);
+
+  padding:10px 14px;
+  border-radius:12px;
+
+  min-width:60px;
 }
 
+/* page */
 .page{display:none;}
 .page.active{display:block;}
 
@@ -144,11 +153,11 @@ button{
 
 <input id="targetWater" placeholder="每日目標 ml">
 
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 起床 500</label></div>
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 上午 1000</label></div>
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 下午 1000</label></div>
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 運動 500</label></div>
-<div class="water-row"><label><input type="checkbox" onchange="calcWater()"> 睡前 500</label></div>
+<label><input type="checkbox" onchange="calcWater()"> 起床 500</label><br>
+<label><input type="checkbox" onchange="calcWater()"> 上午 1000</label><br>
+<label><input type="checkbox" onchange="calcWater()"> 下午 1000</label><br>
+<label><input type="checkbox" onchange="calcWater()"> 運動 500</label><br>
+<label><input type="checkbox" onchange="calcWater()"> 睡前 500</label>
 
 <div id="waterInfo">0 ml</div>
 
@@ -163,16 +172,14 @@ button{
 
 <div class="card">
 <h2>設定</h2>
-
 <button onclick="toggleDark()">🌙 切換深色模式</button>
-
 </div>
 
 </div>
 
 </div>
 
-<!-- nav -->
+<!-- ================= NAV ================= -->
 <div class="nav">
 <div onclick="show(1)">📊 體重</div>
 <div onclick="show(2)">💧 喝水</div>
@@ -182,8 +189,6 @@ button{
 <script>
 
 let water=[500,1000,1000,500,500];
-
-// 📦 載入資料
 let data=JSON.parse(localStorage.getItem("w")||"[]");
 
 function saveWeight(){
