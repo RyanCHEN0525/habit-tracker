@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ryan 每日檢查</title>
+<style>
+body{background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:700px;margin:auto;padding:20px}
+h1{font-size:36px}
+.item{padding:10px 0;border-bottom:1px solid #222}
+label{font-size:24px}
+input[type=checkbox]{transform:scale(1.5);margin-right:12px}
+.card{background:#111;padding:15px;border-radius:12px;margin:15px 0}
+.small{color:#aaa}
+</style>
+</head>
+<body>
+<h1>每日檢查</h1>
+<div id="today"></div>
+<div class="card">
+<h2>最近三天紀錄</h2>
+<div id="history"></div>
+</div>
+
+<script>
+const tasks=[
+"體重紀錄","起床500ml","上午1000ml","下午1000ml","運動時500ml",
+"睡前500ml","蛋白質170g以上","步數8000步以上","完成訓練","00:30前睡覺"
+];
+
+const today=new Date().toISOString().slice(0,10);
+let data=JSON.parse(localStorage.getItem("habitData")||"{}");
+
+if(!data[today]){
+  data[today]={};
+  tasks.forEach(t=>data[today][t]=false);
+}
+
+function save(){
+ localStorage.setItem("habitData",JSON.stringify(data));
+ render();
+}
+
+function render(){
+ const div=document.getElementById("today");
+ let done=0;
+ div.innerHTML="<div class='card'><h2>今天 "+today+"</h2>";
+ tasks.forEach(t=>{
+   if(data[today][t]) done++;
+   div.innerHTML+=`<div class="item"><label><input type="checkbox" ${data[today][t]?"checked":""}
+   onchange="toggleTask('${t}')">${t}</label></div>`;
+ });
+ div.innerHTML+=`<p>完成率：${Math.round(done/tasks.length*100)}%</p></div>`;
+
+ const dates=Object.keys(data).sort().reverse().slice(0,3);
+ document.getElementById("history").innerHTML=dates.map(d=>{
+   let c=Object.values(data[d]).filter(v=>v).length;
+   return `<p>${d} - ${Math.round(c/tasks.length*100)}%</p>`;
+ }).join("");
+}
+
+function toggleTask(task){
+ data[today][task]=!data[today][task];
+ save();
+}
+
+render();
+</script>
+</body>
+</html>
