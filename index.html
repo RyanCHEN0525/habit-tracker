@@ -1,11 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>Ryan Habit Tracker</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>待辦清單</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    padding-top: 50px;
+}
+
+.container {
+    width: 100%;
+    max-width: 500px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+}
+
+.input-area {
+    display: flex;
+    gap: 10px;
+}
+
+input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    background: #333;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #555;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.done {
+    text-decoration: line-through;
+    color: gray;
+}
+
+.actions button {
+    margin-left: 5px;
+    background: #999;
+}
+
+.actions button.delete {
+    background: #e74c3c;
+}
+</style>
 </head>
+
 <body>
-<h1>Ryan Habit Tracker</h1>
-<p>網站已成功部署！</p>
+
+<div class="container">
+    <h1>待辦清單</h1>
+
+    <div class="input-area">
+        <input id="todoInput" placeholder="輸入待辦事項...">
+        <button onclick="addTodo()">新增</button>
+    </div>
+
+    <ul id="todoList"></ul>
+</div>
+
+<script>
+let todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+function save() {
+    localStorage.setItem("todos", JSON.stringify(todos));
+}
+
+function render() {
+    const list = document.getElementById("todoList");
+    list.innerHTML = "";
+
+    todos.forEach((todo, index) => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+            <span class="${todo.done ? 'done' : ''}" onclick="toggle(${index})">
+                ${todo.text}
+            </span>
+            <div class="actions">
+                <button onclick="toggle(${index})">✔</button>
+                <button class="delete" onclick="removeTodo(${index})">刪除</button>
+            </div>
+        `;
+
+        list.appendChild(li);
+    });
+}
+
+function addTodo() {
+    const input = document.getElementById("todoInput");
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    todos.push({ text, done: false });
+    input.value = "";
+
+    save();
+    render();
+}
+
+function toggle(index) {
+    todos[index].done = !todos[index].done;
+    save();
+    render();
+}
+
+function removeTodo(index) {
+    todos.splice(index, 1);
+    save();
+    render();
+}
+
+render();
+</script>
+
 </body>
 </html>
