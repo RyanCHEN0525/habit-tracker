@@ -2,238 +2,174 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>減脂儀表板 V2</title>
-
+<title>體重與喝水紀錄</title>
 <style>
-body{
-font-family:-apple-system;
-background:#f4f6f8;
-display:flex;
-justify-content:center;
-padding:20px;
+body {
+  font-family: Arial;
+  background: #f5f5f5;
+  padding: 20px;
 }
-
-.container{width:100%;max-width:520px;}
-
-.card{
-background:#fff;
-padding:15px;
-border-radius:14px;
-margin-bottom:12px;
-box-shadow:0 5px 20px rgba(0,0,0,0.08);
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
 }
-
-input{
-width:100%;
-padding:10px;
-margin:6px 0;
-border-radius:10px;
-border:1px solid #ccc;
+input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0 10px;
 }
-
-button{
-width:100%;
-padding:10px;
-border:none;
-border-radius:10px;
-background:#333;
-color:white;
-margin-top:6px;
+button {
+  padding: 10px;
+  margin-top: 10px;
+  cursor: pointer;
 }
-
-.progress{
-height:10px;
-background:#ddd;
-border-radius:20px;
-overflow:hidden;
+.section {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 15px;
 }
-
-.bar{
-height:100%;
-background:#4caf50;
+.water-item {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
 }
-
-.item{
-display:flex;
-justify-content:space-between;
-padding:6px 0;
-border-bottom:1px solid #eee;
+.result {
+  background: #eef;
+  padding: 10px;
+  border-radius: 8px;
 }
 </style>
 </head>
 
 <body>
-
 <div class="container">
 
-<!-- 身體資料 -->
-<div class="card">
-<h3>身體資料</h3>
+<h2>體重與喝水紀錄</h2>
 
-<input id="age" placeholder="年齡">
-<input id="height" placeholder="身高 cm">
-<input id="weightNow" placeholder="目前體重 kg">
-<input id="weightGoal" placeholder="目標體重 kg">
+<!-- 體重區 -->
+<div class="section">
+<h3>基本資料</h3>
+
+年齡
+<input type="number" id="age">
+
+身高 (cm)
+<input type="number" id="height">
+
+體重 (kg)
+<input type="number" id="weight">
 
 <button onclick="calcBMI()">計算 BMI</button>
-<div id="bmiResult"></div>
+
+<div class="result" id="bmiResult"></div>
+
 </div>
 
-<!-- 減脂進度 -->
-<div class="card">
-<h3>減脂進度</h3>
-<div class="progress">
-<div class="bar" id="weightBar"></div>
-</div>
-<div id="weightInfo"></div>
-</div>
+<!-- 喝水目標 -->
+<div class="section">
+<h3>喝水設定</h3>
 
-<!-- 喝水 -->
-<div class="card">
-<h3>喝水 3500ml</h3>
-<div class="progress">
-<div class="bar" id="waterBar"></div>
+每日目標喝水量 (ml)
+<input type="number" id="targetWater" placeholder="可自行輸入">
+
+<div class="result" id="waterGoal"></div>
+
 </div>
 
-<div id="waterTasks"></div>
+<!-- 喝水紀錄 -->
+<div class="section">
+<h3>喝水紀錄</h3>
+
+<div class="water-item">
+<label><input type="checkbox" onchange="updateWater()"> 起床 500ml</label>
+<span>500ml</span>
 </div>
 
-<!-- 蛋白質 -->
-<div class="card">
-<h3>蛋白質目標</h3>
-
-<input id="proteinGoal" placeholder="目標蛋白質 g (預設170)">
-<input id="proteinNow" placeholder="已攝取 g">
-
-<button onclick="updateProtein()">更新蛋白質</button>
-
-<div class="progress">
-<div class="bar" id="proteinBar"></div>
+<div class="water-item">
+<label><input type="checkbox" onchange="updateWater()"> 上午 1000ml</label>
+<span>1000ml</span>
 </div>
 
-<div id="proteinInfo"></div>
+<div class="water-item">
+<label><input type="checkbox" onchange="updateWater()"> 下午 1000ml</label>
+<span>1000ml</span>
+</div>
+
+<div class="water-item">
+<label><input type="checkbox" onchange="updateWater()"> 運動 500ml</label>
+<span>500ml</span>
+</div>
+
+<div class="water-item">
+<label><input type="checkbox" onchange="updateWater()"> 睡前 500ml</label>
+<span>500ml</span>
+</div>
+
+<div class="result" id="waterTotal">今日已喝：0 ml</div>
+
+<button onclick="resetWater()">重置今日紀錄</button>
+
 </div>
 
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("v2")) || {};
+let waterValues = [500,1000,1000,500,500];
 
-let today = new Date().toISOString().split("T")[0];
+function calcBMI() {
+  let h = document.getElementById("height").value / 100;
+  let w = document.getElementById("weight").value;
+  let bmi = w / (h*h);
 
-const waterItems = [
-{name:"起床 500ml", val:500},
-{name:"上午 1000ml", val:1000},
-{name:"下午 1000ml", val:1000},
-{name:"運動 500ml", val:500},
-{name:"睡前 500ml", val:500}
-];
+  let status = "";
+  if (bmi < 18.5) status = "過瘦";
+  else if (bmi < 24) status = "正常";
+  else if (bmi < 27) status = "過重";
+  else status = "肥胖";
 
-if(!data[today]){
-data[today]={
-water:0,
-waterDone:{},
-proteinNow:0,
-proteinGoal:170
-};
+  // 建議體重
+  let min = (18.5 * h * h).toFixed(1);
+  let max = (24 * h * h).toFixed(1);
 
-waterItems.forEach(i=>data[today].waterDone[i.name]=false);
+  // 喝水建議：體重 x 35ml
+  let water = Math.round(w * 35);
+
+  document.getElementById("bmiResult").innerHTML =
+    "BMI：" + bmi.toFixed(1) + "<br>" +
+    "狀態：" + status + "<br>" +
+    "建議體重：" + min + " ~ " + max + " kg";
+
+  document.getElementById("waterGoal").innerHTML =
+    "建議每日喝水量：" + water + " ml";
 }
 
-function save(){
-localStorage.setItem("v2",JSON.stringify(data));
+function updateWater() {
+  let checkboxes = document.querySelectorAll("input[type=checkbox]");
+  let total = 0;
+
+  checkboxes.forEach((cb, i) => {
+    if (cb.checked) total += waterValues[i];
+  });
+
+  document.getElementById("waterTotal").innerText =
+    "今日已喝：" + total + " ml";
+
+  let target = document.getElementById("targetWater").value;
+  if (target) {
+    document.getElementById("waterTotal").innerText +=
+      " / 目標：" + target + " ml";
+  }
 }
 
-/* BMI */
-function calcBMI(){
-let h=document.getElementById("height").value/100;
-let w=document.getElementById("weightNow").value;
+function resetWater() {
+  let checkboxes = document.querySelectorAll("input[type=checkbox]");
+  checkboxes.forEach(cb => cb.checked = false);
 
-let bmi=(w/(h*h)).toFixed(1);
-let status="";
-
-if(bmi<18.5)status="過瘦";
-else if(bmi<24)status="正常";
-else if(bmi<27)status="過重";
-else status="肥胖";
-
-document.getElementById("bmiResult").innerText=
-`BMI ${bmi} (${status})`;
+  document.getElementById("waterTotal").innerText = "今日已喝：0 ml";
 }
-
-/* 喝水 */
-function toggleWater(name,val){
-if(!data[today].waterDone[name]){
-data[today].water+=val;
-data[today].waterDone[name]=true;
-}else{
-data[today].water-=val;
-data[today].waterDone[name]=false;
-}
-save();
-render();
-}
-
-/* 蛋白質 */
-function updateProtein(){
-let goal=parseInt(document.getElementById("proteinGoal").value)||170;
-let now=parseInt(document.getElementById("proteinNow").value)||0;
-
-data[today].proteinGoal=goal;
-data[today].proteinNow=now;
-
-save();
-render();
-}
-
-/* 減脂進度 */
-function render(){
-
-let start=83;
-let current=parseFloat(document.getElementById("weightNow").value)||83;
-let goal=parseFloat(document.getElementById("weightGoal").value)||75;
-
-let p=((start-current)/(start-goal))*100;
-document.getElementById("weightBar").style.width=Math.min(p,100)+"%";
-
-document.getElementById("weightInfo").innerText=
-`目前 ${current}kg → 目標 ${goal}kg`;
-
-/* water */
-let w=0;
-let html="";
-
-waterItems.forEach(i=>{
-if(data[today].waterDone[i.name])w+=i.val;
-
-html+=`
-<div class="item">
-<label>
-<input type="checkbox" ${data[today].waterDone[i.name]?"checked":""}
-onchange="toggleWater('${i.name}',${i.val})">
-${i.name}
-</label>
-</div>`;
-});
-
-document.getElementById("waterTasks").innerHTML=html;
-
-let wp=Math.min(w/3500*100,100);
-document.getElementById("waterBar").style.width=wp+"%";
-
-/* protein */
-let pg=data[today].proteinGoal||170;
-let pn=data[today].proteinNow||0;
-
-let pp=Math.min(pn/pg*100,100);
-
-document.getElementById("proteinBar").style.width=pp+"%";
-document.getElementById("proteinInfo").innerText=
-`${pn} / ${pg} g`;
-}
-
-render();
 </script>
 
 </body>
